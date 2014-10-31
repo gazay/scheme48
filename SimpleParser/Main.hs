@@ -1,6 +1,8 @@
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 import Control.Monad
+import Numeric
+import Data.Char
 
 data LispVal = Atom String
              | List [LispVal]
@@ -49,7 +51,17 @@ parseNumber :: Parser LispVal
 -- parseNumber = do
 --                 x <- many1 digit
 --                 (return . Number . read) x
-parseNumber = many1 digit >>= (return . Number . read)
+-- parseNumber = many1 digit >>= (return . Number . read)
+parseNumber = do
+                first <- digit <|> symbol
+                second <- letter <|> digit
+                num <- many (digit <|> letter)
+                return $ case [first, second] of
+                           "#o" -> Number . fst $ readOct num !! 0
+                           "#h" -> Number . fst $ readHex num !! 0
+                           "#d" -> Number . fst $ readDec num !! 0
+                           "#b" -> Number . fst $ readInt 2 isDigit digitToInt num !! 0
+                           _    -> (Number . read) num
 
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
