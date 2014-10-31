@@ -34,13 +34,21 @@ parseAtom = do
                          "#f" -> Bool False
                          _    -> Atom atom
 
+parseNumber :: Parser LispVal
+-- parseNumber = liftM (Number . read) $ many1 digit
+-- parseNumber = do
+--                 x <- many1 digit
+--                 let number = read x
+--                 return $ Number number
+-- parseNumber = do
+--                 x <- many1 digit
+--                 (return . Number . read) x
+parseNumber = many1 digit >>= (return . Number . read)
+
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
         <|> parseNumber
-
-parseNumber :: Parser LispVal
-parseNumber = liftM (Number . read) $ many1 digit
 
 spaces :: Parser ()
 spaces = skipMany1 space
