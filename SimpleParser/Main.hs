@@ -10,19 +10,16 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
+             | Character String
+             deriving (Show)
 
 symbol :: Parser Char
-symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
-
-readExpr :: String -> String
-readExpr input = case parse parseExpr "lisp" input of
-                   Left err  -> "No match: " ++ show err
-                   Right val -> "Found value"
+symbol = oneOf "!$%&|*+-/:<=>?@^_~"
 
 escapedChar :: Parser Char
 escapedChar = do
                 char '\\'
-                x <- oneOf "\"rnt\\"
+                x <- oneOf "\"\r\n\t\\"
                 return x
 
 parseString :: Parser LispVal
@@ -41,6 +38,11 @@ parseAtom = do
                          "#t" -> Bool True
                          "#f" -> Bool False
                          _    -> Atom atom
+
+parseBool :: Parser LispVal
+parseBool = do
+              char '#'
+              (char 't' >> return (Bool True)) <|> (char 'f' >> return (Bool False))
 
 parseNumber :: Parser LispVal
 -- parseNumber = liftM (Number . read) $ many1 digit
@@ -63,13 +65,28 @@ parseNumber = do
                            "#b" -> Number . fst $ readInt 2 isDigit digitToInt num !! 0
                            _    -> (Number . read) num
 
+parseCharacter :: Parser LispVal
+parseCharacter = do
+                  char '#'
+                  char '\\'
+                  x <- many (letter <|> space)
+                  return . Character $ "#\\" ++ x
+
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
+parseExpr =
+        <|> parseAtom
+        <|> parseCharacter
         <|> parseString
         <|> parseNumber
+        <|> parseBool
 
 spaces :: Parser ()
 spaces = skipMany1 space
+
+readExpr :: String -> String
+readExpr input = case parse parseExpr "lisp" input of
+                   Left err  -> "No match: " ++ show err
+                   Right val -> "Found value: " ++ show val
 
 main :: IO ()
 main = do
