@@ -45,25 +45,35 @@ parseBool = do
               (char 't' >> return (Bool True)) <|> (char 'f' >> return (Bool False))
 
 parseNumber :: Parser LispVal
--- parseNumber = liftM (Number . read) $ many1 digit
--- parseNumber = do
---                 x <- many1 digit
---                 let number = read x
---                 return $ Number number
--- parseNumber = do
---                 x <- many1 digit
---                 (return . Number . read) x
--- parseNumber = many1 digit >>= (return . Number . read)
-parseNumber = do
-                first <- digit <|> symbol
-                second <- letter <|> digit
-                num <- many (digit <|> letter)
-                return $ case [first, second] of
-                           "#o" -> Number . fst $ readOct num !! 0
-                           "#h" -> Number . fst $ readHex num !! 0
-                           "#d" -> Number . fst $ readDec num !! 0
-                           "#b" -> Number . fst $ readInt 2 isDigit digitToInt num !! 0
-                           _    -> (Number . read) num
+parseNumber = parseDigital1 <|> parseDigital2 <|> parseHex <|> parseOct <|> parseBin
+
+parseDigital1 :: Parser LispVal
+parseDigital1 = many1 digit >>= (return . Number . read)
+
+parseDigital2 :: Parser LispVal
+parseDigital2 = do try $ string "#d"
+                   many1 digit >>= (return . Number . read)
+
+parseHex :: Parser LispVal
+parseHex = do try $ string "#x"
+              many1 hexDigit >>= (return . Number . hex2dig)
+
+hex2dig :: String -> Integer
+hex2dig x = fst $ readHex x !! 0
+
+parseOct :: Parser LispVal
+parseOct = do try $ string "#o"
+              many1 octDigit >>= (return . Number . oct2dig)
+
+oct2dig :: String -> Integer
+oct2dig x = fst $ readOct x !! 0
+
+parseBin :: Parser LispVal
+parseBin = do try $ string "#b"
+              many1 (oneOf "01") >>= (return . Number . bin2dig)
+
+bin2dig :: String -> Integer
+bin2dig x = fst $ readInt 2 isDigit digitToInt x !! 0
 
 parseCharacter :: Parser LispVal
 parseCharacter = do
@@ -72,10 +82,9 @@ parseCharacter = do
                   x <- many (letter <|> space)
                   return . Character $ "#\\" ++ x
 
+--        <|> parseCharacter
 parseExpr :: Parser LispVal
-parseExpr =
-        <|> parseAtom
-        <|> parseCharacter
+parseExpr = parseAtom
         <|> parseString
         <|> parseNumber
         <|> parseBool
