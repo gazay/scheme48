@@ -10,7 +10,7 @@ data LispVal = Atom String
              | Number Integer
              | String String
              | Bool Bool
-             | Character String
+             | Character Char
              deriving (Show)
 
 symbol :: Parser Char
@@ -76,18 +76,20 @@ bin2dig :: String -> Integer
 bin2dig x = fst $ readInt 2 isDigit digitToInt x !! 0
 
 parseCharacter :: Parser LispVal
-parseCharacter = do
-                  char '#'
-                  char '\\'
-                  x <- many (letter <|> space)
-                  return . Character $ "#\\" ++ x
+parseCharacter = do try $ string "#\\"
+                    value <- try (string "newline" <|> string "space")
+                             <|> do { x <- anyChar; notFollowedBy alphaNum; return [x] }
+                    return $ Character $ case value of
+                                           "space" -> ' '
+                                           "newline" -> '\n'
+                                           otherwise -> (value !! 0)
 
---        <|> parseCharacter
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
-        <|> parseNumber
-        <|> parseBool
+        <|> try parseNumber
+        <|> try parseBool
+        <|> try parseCharacter
 
 spaces :: Parser ()
 spaces = skipMany1 space
