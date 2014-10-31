@@ -17,16 +17,16 @@ readExpr input = case parse parseExpr "lisp" input of
                    Left err  -> "No match: " ++ show err
                    Right val -> "Found value"
 
-escapedQuote :: Parser Char
-escapedQuote = do
+escapedChar :: Parser Char
+escapedChar = do
                 char '\\'
-                char '"'
-                return '"'
+                x <- oneOf "\"rnt\\"
+                return x
 
 parseString :: Parser LispVal
 parseString = do
                 char '"'
-                x <- many (escapedQuote <|> noneOf "\"")
+                x <- many (escapedChar <|> noneOf "\"")
                 char '"'
                 return $ String x
 
