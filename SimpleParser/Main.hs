@@ -114,7 +114,7 @@ parseRational = do
 parseComplex :: Parser LispVal
 parseComplex = do
                 real <- many digit
-                char '.'
+                char '+'
                 imag <- many digit
                 char 'i'
                 let complex = read real :+ read imag
