@@ -8,6 +8,7 @@ data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Number Integer
+             | Float Float
              | String String
              | Bool Bool
              | Character Char
@@ -75,6 +76,17 @@ parseBin = do try $ string "#b"
 bin2dig :: String -> Integer
 bin2dig x = fst $ readInt 2 isDigit digitToInt x !! 0
 
+parseFloat :: Parser LispVal
+parseFloat = do
+              real <- many digit
+              char '.'
+              frac <- many digit
+              let float = real ++ '.':frac
+              return . Float $ flt2dig float
+
+flt2dig :: String -> Float
+flt2dig x = fst $ readFloat x !! 0
+
 parseCharacter :: Parser LispVal
 parseCharacter = do try $ string "#\\"
                     value <- try (string "newline" <|> string "space")
@@ -87,6 +99,7 @@ parseCharacter = do try $ string "#\\"
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
+        <|> try parseFloat
         <|> try parseNumber
         <|> try parseBool
         <|> try parseCharacter
