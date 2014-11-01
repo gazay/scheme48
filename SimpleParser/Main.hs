@@ -12,7 +12,7 @@ data LispVal = Atom String
              | Number Integer
              | Float Double
              | Rational Rational
-             | Complex (Complex Integer)
+             | Complex (Complex Double)
              | String String
              | Bool Bool
              | Character Char
@@ -103,6 +103,10 @@ parseLongFloat = do
 flt2dig :: String -> Double
 flt2dig x = fst $ readFloat x !! 0
 
+toDouble :: LispVal -> Double
+toDouble (Float f) = f
+toDouble (Number n) = fromIntegral n
+
 parseRational :: Parser LispVal
 parseRational = do
                   qout <- many digit
@@ -113,11 +117,11 @@ parseRational = do
 
 parseComplex :: Parser LispVal
 parseComplex = do
-                real <- many digit
+                real <- (try parseFloat <|> parseDigital1)
                 char '+'
-                imag <- many digit
+                imag <- (try parseFloat <|> parseDigital1)
                 char 'i'
-                let complex = read real :+ read imag
+                let complex = toDouble real :+ toDouble imag
                 return . Complex $ complex
 
 parseCharacter :: Parser LispVal
