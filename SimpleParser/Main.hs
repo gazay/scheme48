@@ -8,7 +8,7 @@ data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Number Integer
-             | Float Float
+             | Float Double
              | String String
              | Bool Bool
              | Character Char
@@ -96,7 +96,7 @@ parseLongFloat = do
               let float = real ++ '.':frac ++ restFrac
               return . Float $ flt2dig float
 
-flt2dig :: String -> Float
+flt2dig :: String -> Double
 flt2dig x = fst $ readFloat x !! 0
 
 parseCharacter :: Parser LispVal
