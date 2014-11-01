@@ -3,12 +3,14 @@ import System.Environment
 import Control.Monad
 import Numeric
 import Data.Char
+import Data.Ratio
 
 data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
              | Number Integer
              | Float Double
+             | Rational Rational
              | String String
              | Bool Bool
              | Character Char
@@ -99,6 +101,14 @@ parseLongFloat = do
 flt2dig :: String -> Double
 flt2dig x = fst $ readFloat x !! 0
 
+parseRational :: Parser LispVal
+parseRational = do
+                  qout <- many digit
+                  char '/'
+                  denom <- many digit
+                  let ratio = read qout % read denom
+                  return . Rational $ ratio
+
 parseCharacter :: Parser LispVal
 parseCharacter = do try $ string "#\\"
                     value <- try (string "newline" <|> string "space")
@@ -111,6 +121,7 @@ parseCharacter = do try $ string "#\\"
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
+        <|> try parseRational
         <|> try parseLongFloat
         <|> try parseFloat
         <|> try parseNumber
