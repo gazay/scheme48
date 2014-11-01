@@ -81,7 +81,19 @@ parseFloat = do
               real <- many digit
               char '.'
               frac <- many digit
-              let float = real ++ '.':frac
+              let cuttedFrac = take 6 frac
+              let float = real ++ '.':cuttedFrac
+              return . Float $ flt2dig float
+
+parseLongFloat :: Parser LispVal
+parseLongFloat = do
+              real <- many digit
+              char '.'
+              frac <- many digit
+              char 'L'
+              prolongate <- digit
+              let restFrac = replicate (12 - length frac) prolongate
+              let float = real ++ '.':frac ++ restFrac
               return . Float $ flt2dig float
 
 flt2dig :: String -> Float
@@ -99,6 +111,7 @@ parseCharacter = do try $ string "#\\"
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
+        <|> try parseLongFloat
         <|> try parseFloat
         <|> try parseNumber
         <|> try parseBool
