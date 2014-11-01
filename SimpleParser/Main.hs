@@ -4,6 +4,7 @@ import Control.Monad
 import Numeric
 import Data.Char
 import Data.Ratio
+import Data.Complex
 
 data LispVal = Atom String
              | List [LispVal]
@@ -11,6 +12,7 @@ data LispVal = Atom String
              | Number Integer
              | Float Double
              | Rational Rational
+             | Complex (Complex Integer)
              | String String
              | Bool Bool
              | Character Char
@@ -109,6 +111,15 @@ parseRational = do
                   let ratio = read qout % read denom
                   return . Rational $ ratio
 
+parseComplex :: Parser LispVal
+parseComplex = do
+                real <- many digit
+                char '.'
+                imag <- many digit
+                char 'i'
+                let complex = read real :+ read imag
+                return . Complex $ complex
+
 parseCharacter :: Parser LispVal
 parseCharacter = do try $ string "#\\"
                     value <- try (string "newline" <|> string "space")
@@ -121,6 +132,7 @@ parseCharacter = do try $ string "#\\"
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
+        <|> try parseComplex
         <|> try parseRational
         <|> try parseLongFloat
         <|> try parseFloat
