@@ -1,4 +1,4 @@
-import Text.ParserCombinators.Parsec hiding (spaces)
+import Text.ParserCombinators.Parsec
 import System.Environment
 import Control.Monad
 import Numeric
@@ -22,6 +22,9 @@ data LispVal = Atom String
 
 symbol :: Parser Char
 symbol = oneOf "!$%&|*+-/:<=>?@^_~"
+
+spaces1 :: Parser ()
+spaces1 = skipMany1 space
 
 escapedChar :: Parser Char
 escapedChar = do
@@ -135,14 +138,13 @@ parseCharacter = do try $ string "#\\"
                                            "newline" -> '\n'
                                            otherwise -> (value !! 0)
 
-parseList :: Parser LispVal
-parseList = liftM List $ sepBy parseExpr spaces
-
-parseDottedList :: Parser LispVal
-parseDottedList = do
-    head <- endBy parseExpr spaces
-    tail <- char '.' >> spaces >> parseExpr
-    return $ DottedList head tail
+parseAnyList :: Parser LispVal
+parseAnyList = do
+                char '(' >> spaces
+                head <- parseExpr `sepEndBy` spaces
+                do tail <- char '.' >> spaces1 >> parseExpr
+                   return $ DottedList head tail
+                  <|> (spaces >> char ')' >> (return $ List head))
 
 parseQuoted :: Parser LispVal
 parseQuoted = do
@@ -166,7 +168,7 @@ parseUnquote = do
 parseVector :: Parser LispVal
 parseVector = do
                 try $ string "#("
-                xs <- sepBy parseExpr spaces
+                xs <- sepBy parseExpr spaces1
                 char ')'
                 let arr = array (1, length xs) ([(i, x) | (i, x) <- zip [1..(length xs)] xs])
                 return $ Vector arr
@@ -185,13 +187,7 @@ parseExpr = parseAtom
         <|> parseQuoted
         <|> parseQuasiquote
         <|> parseUnquote
-        <|> do char '('
-               x <- try parseList <|> parseDottedList
-               char ')'
-               return x
-
-spaces :: Parser ()
-spaces = skipMany1 space
+        <|> parseAnyList
 
 readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
