@@ -3,6 +3,13 @@
 if [ ! -f ./parser ];
 then
   ghc -o parser --make Main.hs
+  if [ ! -f ./parser ];
+  then
+    echo "Error occured, check output above"
+    exit 0
+  else
+    continue
+  fi
 else
   continue
 fi
