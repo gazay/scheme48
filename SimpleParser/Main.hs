@@ -82,18 +82,18 @@ bin2dig x = fst $ readInt 2 isDigit digitToInt x !! 0
 
 parseFloat :: Parser LispVal
 parseFloat = do
-              real <- many digit
+              real <- many1 digit
               char '.'
-              frac <- many digit
+              frac <- many1 digit
               let cuttedFrac = take 6 frac
               let float = real ++ '.':cuttedFrac
               return . Float $ flt2dig float
 
 parseLongFloat :: Parser LispVal
 parseLongFloat = do
-              real <- many digit
+              real <- many1 digit
               char '.'
-              frac <- many digit
+              frac <- many1 digit
               char 'L'
               prolongate <- digit
               let restFrac = replicate (12 - length frac) prolongate
@@ -133,6 +133,21 @@ parseCharacter = do try $ string "#\\"
                                            "newline" -> '\n'
                                            otherwise -> (value !! 0)
 
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+parseDottedList :: Parser LispVal
+parseDottedList = do
+    head <- endBy parseExpr spaces
+    tail <- char '.' >> spaces >> parseExpr
+    return $ DottedList head tail
+
+parseQuoted :: Parser LispVal
+parseQuoted = do
+                char '\''
+                x <- parseExpr
+                return $ List [Atom "qoute", x]
+
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
@@ -143,6 +158,11 @@ parseExpr = parseAtom
         <|> try parseNumber
         <|> try parseBool
         <|> try parseCharacter
+        <|> parseQuoted
+        <|> do char '('
+               x <- try parseList <|> parseDottedList
+               char ')'
+               return x
 
 spaces :: Parser ()
 spaces = skipMany1 space
