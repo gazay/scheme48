@@ -5,6 +5,7 @@ import Numeric
 import Data.Char
 import Data.Ratio
 import Data.Complex
+import Data.Array
 
 data LispVal = Atom String
              | List [LispVal]
@@ -16,6 +17,7 @@ data LispVal = Atom String
              | String String
              | Bool Bool
              | Character Char
+             | Vector (Array Int LispVal)
              deriving (Show)
 
 symbol :: Parser Char
@@ -160,6 +162,15 @@ parseUnquote = do
                     x <- parseExpr
                     return $ List [Atom "unqoute", x]
 
+-- First implementation with Data.Array
+parseVector :: Parser LispVal
+parseVector = do
+                try $ string "#("
+                xs <- sepBy parseExpr spaces
+                char ')'
+                let arr = array (1, length xs) ([(i, x) | (i, x) <- zip [1..(length xs)] xs])
+                return $ Vector arr
+
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
@@ -170,6 +181,7 @@ parseExpr = parseAtom
         <|> try parseNumber
         <|> try parseBool
         <|> try parseCharacter
+        <|> try parseVector
         <|> parseQuoted
         <|> parseQuasiquote
         <|> parseUnquote
