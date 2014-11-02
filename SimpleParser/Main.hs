@@ -148,6 +148,18 @@ parseQuoted = do
                 x <- parseExpr
                 return $ List [Atom "qoute", x]
 
+parseQuasiquote :: Parser LispVal
+parseQuasiquote = do
+                    char '`'
+                    x <- parseExpr
+                    return $ List [Atom "quasiqoute", x]
+
+parseUnquote :: Parser LispVal
+parseUnquote = do
+                    char ','
+                    x <- parseExpr
+                    return $ List [Atom "unqoute", x]
+
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
         <|> parseString
@@ -159,6 +171,8 @@ parseExpr = parseAtom
         <|> try parseBool
         <|> try parseCharacter
         <|> parseQuoted
+        <|> parseQuasiquote
+        <|> parseUnquote
         <|> do char '('
                x <- try parseList <|> parseDottedList
                char ')'
