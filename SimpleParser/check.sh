@@ -126,6 +126,23 @@ fi
 ./parser "(mod 3 2)"
 ./parser "(quatinent 3 2)"
 ./parser "(reminder 3 2)"
+if [ ! $# -eq 0 ];
+then
+  echo
+  echo "-- Checking types"
+fi
+./parser "(symbol? %)"
+./parser "(symbol? 1)"
+./parser "(number? 1)"
+./parser "(number? %)"
+./parser "(string? \"string\")"
+./parser "(string? %)"
+
+echo "Not implemented for eval"
+./parser "(float? 1.1)"
+./parser "(float? %)"
+./parser "(list? (1 2 3))"
+./parser "(list? (1 2 . 3))"
 
 
 rm ./parser

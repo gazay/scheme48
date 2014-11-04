@@ -226,19 +226,53 @@ primitives = [("+", numericBinop (+)),
               ("/", numericBinop div),
               ("mod", numericBinop mod),
               ("quotinent", numericBinop quot),
-              ("remainder", numericBinop rem)]
+              ("remainder", numericBinop rem),
+              ("symbol?",     typeOp atomP),
+              ("list?",       typeOp listP),
+              ("dottedList?", typeOp dottedListP),
+              ("string?",     typeOp stringP),
+              ("number?",     typeOp numberP),
+              ("float?",      typeOp floatP),
+              ("complex?",    typeOp complexP),
+              ("bool?",       typeOp boolP),
+              ("ratinal?",    typeOp rationalP),
+              ("character?",  typeOp characterP),
+              ("vector?",     typeOp characterP)]
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
 numericBinop func args = Number $ foldl1 func $ map unpackNum args
 
 unpackNum :: LispVal -> Integer
 unpackNum (Number val) = val
-unpackNum (String val) = let parsed = reads val :: [(Integer, String)] in
-                             if null parsed
-                               then 0
-                               else fst $ parsed !! 0
-unpackNum (List [n]) = unpackNum n
 unpackNum _ = 0
+
+typeOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal
+typeOp f [v] = f v
+typeOp _ _ = Bool False
+
+atomP, stringP, numberP, complexP, floatP, rationalP, listP, dottedListP, characterP, boolP, vectorP :: LispVal -> LispVal
+atomP (Atom _) = Bool True
+atomP _ = Bool False
+stringP (String _) = Bool True
+stringP _ = Bool False
+numberP (Number _) = Bool True
+numberP _ = Bool False
+complexP (Complex _) = Bool True
+complexP _ = Bool False
+rationalP (Rational _) = Bool True
+rationalP _ = Bool False
+floatP (Float _) = Bool True
+floatP _ = Bool False
+listP (List _) = Bool True
+listP _ = Bool False
+dottedListP (DottedList _ _) = Bool True
+dottedListP _ = Bool False
+boolP (Bool _) = Bool True
+boolP _ = Bool False
+characterP (Character _) = Bool True
+characterP _ = Bool False
+vectorP (Vector _) = Bool True
+vectorP _ = Bool False
 
 readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "lisp" input of
