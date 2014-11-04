@@ -49,13 +49,6 @@ showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tai
 
 instance Show LispVal where show = showVal
 
-eval :: LispVal -> LispVal
-eval val@(Bool _) = val
-eval val@(Number _) = val
-eval val@(Atom _) = val
-eval val@(String _) = val
-eval (List [Atom "quote", val]) = val
-
 parseString :: Parser LispVal
 parseString = do
                 char '"'
@@ -212,6 +205,38 @@ parseExpr = parseAtom
         <|> parseQuasiquote
         <|> parseUnquote
         <|> parseAnyList
+
+eval :: LispVal -> LispVal
+eval val@(Bool _) = val
+eval val@(Number _) = val
+eval val@(Atom _) = val
+eval val@(String _) = val
+eval (List [Atom "quote", val]) = val
+eval (List (Atom func : args)) = apply func $ map eval args
+
+apply :: String -> [LispVal] -> LispVal
+apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+
+primitives :: [(String, [LispVal] -> LispVal)]
+primitives = [("+", numericBinop (+)),
+              ("-", numericBinop (-)),
+              ("*", numericBinop (*)),
+              ("/", numericBinop div),
+              ("mod", numericBinop mod),
+              ("quotinent", numericBinop quot),
+              ("remainder", numericBinop rem)]
+
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
+numericBinop func args = Number $ foldl1 func $ map unpackNum args
+
+unpackNum :: LispVal -> Integer
+unpackNum (Number val) = val
+unpackNum (String val) = let parsed = reads val :: [(Integer, String)] in
+                             if null parsed
+                               then 0
+                               else fst $ parsed !! 0
+unpackNum (List [n]) = unpackNum n
+unpackNum _ = 0
 
 readExpr :: String -> LispVal
 readExpr input = case parse parseExpr "lisp" input of
