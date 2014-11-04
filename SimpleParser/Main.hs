@@ -46,6 +46,7 @@ showVal (Character contents) = "#\\" ++ [contents]
 showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
 showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+showVal (Vector contents) = "(" ++ show contents ++ ")"
 
 instance Show LispVal where show = showVal
 
