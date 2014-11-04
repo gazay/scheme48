@@ -213,6 +213,7 @@ eval val@(Atom _) = val
 eval val@(String _) = val
 eval (List [Atom "quote", val]) = val
 eval (List (Atom func : args)) = apply func $ map eval args
+eval val@(_) = String $ "Evaluating of \"" ++ show val ++ "\" Not implemented yet"
 
 apply :: String -> [LispVal] -> LispVal
 apply func args = maybe (Bool False) ($ args) $ lookup func primitives
