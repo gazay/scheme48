@@ -220,34 +220,42 @@ apply :: String -> [LispVal] -> LispVal
 apply func args = maybe (Bool False) ($ args) $ lookup func primitives
 
 primitives :: [(String, [LispVal] -> LispVal)]
-primitives = [("+", numericBinop (+)),
-              ("-", numericBinop (-)),
-              ("*", numericBinop (*)),
-              ("/", numericBinop div),
-              ("mod", numericBinop mod),
-              ("quotinent", numericBinop quot),
-              ("remainder", numericBinop rem),
-              ("symbol?",     typeOp atomP),
-              ("list?",       typeOp listP),
-              ("string?",     typeOp stringP),
-              ("number?",     typeOp numberP),
-              ("float?",      typeOp floatP),
-              ("complex?",    typeOp complexP),
-              ("bool?",       typeOp boolP),
-              ("ratinal?",    typeOp rationalP),
-              ("character?",  typeOp characterP),
-              ("vector?",     typeOp characterP)]
+primitives = [("+",              numericBinop (+)),
+              ("-",              numericBinop (-)),
+              ("*",              numericBinop (*)),
+              ("/",              numericBinop div),
+              ("mod",            numericBinop mod),
+              ("quotinent",      numericBinop quot),
+              ("remainder",      numericBinop rem),
+              ("symbol?",        typeOp atomP),
+              ("list?",          typeOp listP),
+              ("string?",        typeOp stringP),
+              ("number?",        typeOp numberP),
+              ("float?",         typeOp floatP),
+              ("complex?",       typeOp complexP),
+              ("bool?",          typeOp boolP),
+              ("ratinal?",       typeOp rationalP),
+              ("character?",     typeOp characterP),
+              ("vector?",        typeOp vectorP),
+              ("symbol->string", symbol2string),
+              ("string->symbol", string2symbol)]
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
 numericBinop func args = Number $ foldl1 func $ map unpackNum args
 
-unpackNum :: LispVal -> Integer
-unpackNum (Number val) = val
-unpackNum _ = 0
-
 typeOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal
 typeOp f [v] = f v
 typeOp _ _ = Bool False
+
+symbol2string, string2symbol :: [LispVal] -> LispVal
+symbol2string [(Atom a)]   = String a
+symbol2string _            = String ""
+string2symbol [(String a)] = Atom a
+string2symbol _            = Atom ""
+
+unpackNum :: LispVal -> Integer
+unpackNum (Number val) = val
+unpackNum _ = 0
 
 atomP, stringP, numberP, complexP, floatP, rationalP, listP, characterP, boolP, vectorP :: LispVal -> LispVal
 atomP       (Atom _)         = Bool True
