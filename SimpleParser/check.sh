@@ -137,6 +137,8 @@ fi
 ./parser "(number? %)"
 ./parser "(string? \"string\")"
 ./parser "(string? %)"
+./parser "(string->symbol \"string\")"
+./parser "(symbol->string %symbol)"
 
 echo "Not implemented for eval"
 ./parser "(float? 1.1)"
