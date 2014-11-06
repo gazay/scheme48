@@ -4,7 +4,7 @@ Write Yourself a Scheme in 48 Hours
 - [x] Parsing
   - [x] Ex 1
   - [x] Ex 2
-- [ ] Evaluation, Part 1
+- [x] Evaluation, Part 1
 - [ ] Error Checking and Exceptions
 - [ ] Evaluation, Part 2
 - [ ] Building a REPL: Basic I/O
