@@ -1,6 +1,7 @@
 import Text.ParserCombinators.Parsec
 import System.Environment
 import Control.Monad
+import Control.Monad.Error
 import Numeric
 import Data.Char
 import Data.Ratio
@@ -18,6 +19,14 @@ data LispVal = Atom String
              | Bool Bool
              | Character Char
              | Vector (Array Int LispVal)
+
+data LispError = NumArgs Integer [LispVal]
+               | TypeMismatch String LispVal
+               | Parser ParseError
+               | BadSpecialForm String LispVal
+               | NotFunction String String
+               | UnboundVar String String
+               | Default String
 
 symbol :: Parser Char
 symbol = oneOf "!$%&|*+-/:<=>?@^_~"
