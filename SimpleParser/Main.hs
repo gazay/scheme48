@@ -261,6 +261,19 @@ primitives = [("+",              numericBinop (+)),
               ("mod",            numericBinop mod),
               ("quotinent",      numericBinop quot),
               ("remainder",      numericBinop rem),
+              ("=",              numBoolBinop (==)),
+              ("<",              numBoolBinop (<)),
+              (">",              numBoolBinop (>)),
+              ("/=",             numBoolBinop (/=)),
+              ("<=",             numBoolBinop (<=)),
+              (">=",             numBoolBinop (>=)),
+              ("&&",             boolBoolBinop (&&)),
+              ("||",             boolBoolBinop (||)),
+              ("string=?",       strBoolBinop (==)),
+              ("string<?",       strBoolBinop (<)),
+              ("string>?",       strBoolBinop (>)),
+              ("string<=?",      strBoolBinop (<=)),
+              ("string>=?",      strBoolBinop (>=)),
               ("symbol?",        typeOp atomP),
               ("list?",          typeOp listP),
               ("string?",        typeOp stringP),
@@ -273,6 +286,27 @@ primitives = [("+",              numericBinop (+)),
               ("vector?",        typeOp vectorP),
               ("symbol->string", symbol2string),
               ("string->symbol", string2symbol)]
+
+boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
+boolBinop unpacker op args = if length args /= 2
+                               then throwError $ NumArgs 2 args
+                               else do left <- unpacker $ args !! 0
+                                       right <- unpacker $ args !! 1
+                                       retrun $ Bool $ left `op` right
+
+numBoolBinop = boolBinop unpackNum
+strBoolBinop = boolBinop unpackStr
+boolBoolBinop = boolBinop unpackBool
+
+unpackStr :: LispVal -> ThrowsError String
+unpackStr (String s) = return s
+unpackStr (Number s) = return $ show s
+unpackStr (Bool s) = return $ show s
+unpackStr notString = throwError $ TypeMismatch "string" notString
+
+unpackBool :: LispVal -> ThrowsError Bool
+unpackBool (Bool b) = return b
+unpackBool notBool = throwError $ TypeMismatch "bool" notBool
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op []              = throwError $ NumArgs 2 []
