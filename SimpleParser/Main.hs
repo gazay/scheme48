@@ -253,6 +253,26 @@ eval (List [Atom "if", pred, conseq, alt]) =
 eval (List (Atom func : args)) = mapM eval args >>= apply func
 eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
+car :: [LispVal] -> ThrowsError LispVal
+car [List (x : xs)]         = return x
+car [DottedList (x : xs) _] = return x
+car [badArg]                = throwError $ TypeMismatch "pair" badArg
+car badArgList              = throwError $ NumArgs 1 badArgList
+
+cdr :: [LispVal] -> ThrowsError LispVal
+cdr [List (_ : xs)]         = return $ List xs
+cdr [DottedList [_] x]      = return x
+cdr [DottedList (_ : xs) x] = return $ DottedList xs x
+car [badArg]                = throwError $ TypeMismatch "pair" badArg
+car badArgList              = throwError $ NumArgs 1 badArgList
+
+cons :: [LispVal] -> ThrowsError LispVal
+cons [x1, List []]            = return $ List [x1]
+cons [x, List xs]             = return $ List $ x : xs
+cons [x, DottedList xs xlast] = return $ DottedList (x:xs) xlast
+cons [x1, x2]                 = return $ DottedList [x1] x2
+cons badArgList               = throwError $ NumArgs 1 badArgList
+
 apply :: String -> [LispVal] -> ThrowsError LispVal
 apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
                         ($ args)
