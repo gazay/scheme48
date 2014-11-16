@@ -274,8 +274,8 @@ cdr :: [LispVal] -> ThrowsError LispVal
 cdr [List (_ : xs)]         = return $ List xs
 cdr [DottedList [_] x]      = return x
 cdr [DottedList (_ : xs) x] = return $ DottedList xs x
-car [badArg]                = throwError $ TypeMismatch "pair" badArg
-car badArgList              = throwError $ NumArgs 1 badArgList
+cdr [badArg]                = throwError $ TypeMismatch "pair" badArg
+cdr badArgList              = throwError $ NumArgs 1 badArgList
 
 cons :: [LispVal] -> ThrowsError LispVal
 cons [x1, List []]            = return $ List [x1]
@@ -289,7 +289,7 @@ eqv [(Bool arg1), (Bool arg2)] = return $ Bool $ arg1 == arg2
 eqv [(Number arg1), (Number arg2)] = return $ Bool $ arg1 == arg2
 eqv [(String arg1), (String arg2)] = return $ Bool $ arg1 == arg2
 eqv [(Atom arg1), (Atom arg2)] = return $ Bool $ arg1 == arg2
-eqv [(DottedList xs x), (DottedList ys s)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
 eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
                                                  (all eqvPair $ zip arg1 arg2)
                                                  where eqvPair (x1, x2) = case eqv [x1, x2] of
@@ -301,7 +301,7 @@ eqv badArgList = throwError $ NumArgs 2 badArgList
 equal :: [LispVal] -> ThrowsError LispVal
 equal [arg1, arg2] = do
     primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
-                                       [AnyUnpacker unpackNum, AnyUnpacker unpackString, AnyUnpacker unpackBool]
+                                       [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
     eqvEquals <- eqv [arg1, arg2]
     return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
 equal badArgList = throwError $ NumArgs 2 badArgList
@@ -355,7 +355,7 @@ boolBinop unpacker op args = if length args /= 2
                                then throwError $ NumArgs 2 args
                                else do left <- unpacker $ args !! 0
                                        right <- unpacker $ args !! 1
-                                       retrun $ Bool $ left `op` right
+                                       return $ Bool $ left `op` right
 
 numBoolBinop = boolBinop unpackNum
 strBoolBinop = boolBinop unpackStr
