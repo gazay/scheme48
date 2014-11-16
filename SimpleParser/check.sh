@@ -7,11 +7,7 @@ then
   then
     echo "Error occured, check output above"
     exit 0
-  else
-    continue
   fi
-else
-  continue
 fi
 
 if [ ! $# -eq 0 ];
