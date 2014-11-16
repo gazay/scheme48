@@ -251,18 +251,26 @@ parseExpr = parseAtom
         <|> parseAnyList
 
 eval :: LispVal -> ThrowsError LispVal
-eval val@(Bool _) = return val
-eval val@(Number _) = return val
-eval val@(Atom _) = return val
-eval val@(String _) = return val
-eval (List [Atom "quote", val]) = return val
+eval val@(Bool _)                          = return val
+eval val@(Number _)                        = return val
+eval val@(Float _)                         = return val
+eval val@(Rational _)                      = return val
+eval val@(Complex _)                       = return val
+eval val@(Atom _)                          = return val
+eval val@(String _)                        = return val
+eval val@(Character _)                     = return val
+-- eval val@(Vector _) = return val
+eval (List [Atom "quote", val])            = return val
+eval (List [Atom "quasiquote", val])       = return val
 eval (List [Atom "if", pred, conseq, alt]) =
     do result <- eval pred
        case result of
          Bool False -> eval alt
          otherwise  -> eval conseq
-eval (List (Atom func : args)) = mapM eval args >>= apply func
-eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+eval (List (Atom func : args))             = mapM eval args >>= apply func
+eval val@(List _)                          = return val
+eval val@(DottedList _ _)                  = return val
+eval badForm                               = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : xs)]         = return x

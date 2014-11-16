@@ -16,8 +16,8 @@ then
   echo
   echo "Numbers"
 fi
-./parser 1
-./parser 25
+./parser "1"
+./parser "25"
 if [ ! $# -eq 0 ];
 then
   echo
@@ -88,19 +88,20 @@ then
   echo
   echo "-- Quoted value"
 fi
-./parser "'12"
+./parser "(1 '(1 2))"
+./parser "'2"
 if [ ! $# -eq 0 ];
 then
   echo
   echo "-- Backquoted value"
 fi
-./parser "\`12"
+./parser "(0 \`(1 2))"
 if [ ! $# -eq 0 ];
 then
   echo
-  echo "-- Quaziquoted value"
+  echo "-- Unquoted value"
 fi
-./parser ",12"
+./parser "(1 ,(1 2))"
 if [ ! $# -eq 0 ];
 then
   echo
@@ -120,8 +121,8 @@ fi
 ./parser "(- 3 2 8)"
 ./parser "(/ 3 2)"
 ./parser "(mod 3 2)"
-./parser "(quatinent 3 2)"
-./parser "(reminder 3 2)"
+./parser "(quotinent 3 2)"
+./parser "(remainder 3 2)"
 if [ ! $# -eq 0 ];
 then
   echo
@@ -135,12 +136,29 @@ fi
 ./parser "(string? %)"
 ./parser "(string->symbol \"string\")"
 ./parser "(symbol->string %symbol)"
-
-echo "Not implemented for eval"
 ./parser "(float? 1.1)"
 ./parser "(float? %)"
 ./parser "(list? (1 2 3))"
 ./parser "(list? (1 2 . 3))"
+if [ ! $# -eq 0 ];
+then
+  echo
+  echo "-- Primitives"
+fi
+./parser "(> 2 3)"
+./parser "(< 2 3)"
+./parser "(<= 2 3)"
+./parser "(string=? \"test\" \"test\")"
+./parser "(string=? \"test2\" \"test\")"
+./parser "(string<? \"abc\" \"bba\")"
+./parser "(car (1 2 3))"
+./parser "(car (\"a\" \"b\" \"c\"))"
+./parser "(cdr (1 2 3))"
+./parser "(cdr (\"a\" \"b\" \"c\"))"
+./parser "(eqv? 2 3)"
+./parser "(eqv? 2 2)"
+./parser "(eqv? 2 \"2\")"
+./parser "(equal? 2 \"2\")"
 
 
 rm ./parser
