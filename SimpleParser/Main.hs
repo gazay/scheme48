@@ -1,3 +1,5 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 import Text.ParserCombinators.Parsec
 import System.Environment
 import Control.Monad
@@ -27,6 +29,15 @@ data LispError = NumArgs Integer [LispVal]
                | NotFunction String String
                | UnboundVar String String
                | Default String
+
+data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
+
+unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
+unpackEquals arg1 arg2 (AnyUnpacker unpacker) = do
+    unpacked1 <- unpacker arg1
+    unpacked2 <- unpacker arg2
+    return $ unpacked1 == unpacked2
+    `catchError` (const $ return False)
 
 symbol :: Parser Char
 symbol = oneOf "!$%&|*+-/:<=>?@^_~"
@@ -287,6 +298,14 @@ eqv [(List arg1), (List arg2)] = return $ Bool $ (length arg1 == length arg2) &&
 eqv [_, _] = return $ Bool False
 eqv badArgList = throwError $ NumArgs 2 badArgList
 
+equal :: [LispVal] -> ThrowsError LispVal
+equal [arg1, arg2] = do
+    primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
+                                       [AnyUnpacker unpackNum, AnyUnpacker unpackString, AnyUnpacker unpackBool]
+    eqvEquals <- eqv [arg1, arg2]
+    return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
+equal badArgList = throwError $ NumArgs 2 badArgList
+
 apply :: String -> [LispVal] -> ThrowsError LispVal
 apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
                         ($ args)
@@ -324,7 +343,12 @@ primitives = [("+",              numericBinop (+)),
               ("character?",     typeOp characterP),
               ("vector?",        typeOp vectorP),
               ("symbol->string", symbol2string),
-              ("string->symbol", string2symbol)]
+              ("string->symbol", string2symbol),
+              ("car",            car),
+              ("cdr",            cdr),
+              ("eq?",            eqv),
+              ("eqv?",           eqv),
+              ("equal?",         equal)]
 
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
