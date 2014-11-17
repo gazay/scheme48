@@ -159,6 +159,7 @@ fi
 ./parser "(eqv? 2 2)"
 ./parser "(eqv? 2 \"2\")"
 ./parser "(equal? 2 \"2\")"
+./parser "(equal? (1 2) (1 \"2\"))"
 
 
 rm ./parser
