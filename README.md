@@ -5,7 +5,7 @@ Write Yourself a Scheme in 48 Hours
   - [x] Ex 1
   - [x] Ex 2
 - [x] Evaluation, Part 1
-- [ ] Error Checking and Exceptions
+- [x] Error Checking and Exceptions
 - [ ] Evaluation, Part 2
 - [ ] Building a REPL: Basic I/O
 - [ ] Adding Variables and Assignment: Mutable State in Haskell
