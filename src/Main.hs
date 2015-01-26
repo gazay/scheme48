@@ -133,14 +133,14 @@ parseHex = do try $ string "#x"
               many1 hexDigit >>= (return . Number . hex2dig)
 
 hex2dig :: String -> Integer
-hex2dig x = fst $ readHex x !! 0
+hex2dig x = fst . head $ readHex x
 
 parseOct :: Parser LispVal
 parseOct = do try $ string "#o"
               many1 octDigit >>= (return . Number . oct2dig)
 
 oct2dig :: String -> Integer
-oct2dig x = fst $ readOct x !! 0
+oct2dig x = fst . head $ readOct x
 
 parseBin :: Parser LispVal
 parseBin = do try $ string "#b"
@@ -370,7 +370,7 @@ primitives = [("+",              numericBinop (+)),
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
                                then throwError $ NumArgs 2 args
-                               else do left <- unpacker $ args !! 0
+                               else do left <- unpacker $ head args
                                        right <- unpacker $ args !! 1
                                        return $ Bool $ left `op` right
 
