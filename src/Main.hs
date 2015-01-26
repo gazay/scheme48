@@ -68,7 +68,7 @@ showVal (Bool True) = "#t"
 showVal (Character contents) = "#\\" ++ [contents]
 showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordsList contents ++ ")"
-showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+showVal (DottedList listHead listTail) = "(" ++ unwordsList listHead ++ " . " ++ showVal listTail ++ ")"
 showVal (Vector contents) = "(" ++ show contents ++ ")"
 
 instance Show LispVal where show = showVal
@@ -133,21 +133,21 @@ parseHex = do try $ string "#x"
               many1 hexDigit >>= (return . Number . hex2dig)
 
 hex2dig :: String -> Integer
-hex2dig x = fst . head $ readHex x
+hex2dig x = fst $ readHex (head x)
 
 parseOct :: Parser LispVal
 parseOct = do try $ string "#o"
               many1 octDigit >>= (return . Number . oct2dig)
 
 oct2dig :: String -> Integer
-oct2dig x = fst . head $ readOct x
+oct2dig x = fst $ readOct (head x)
 
 parseBin :: Parser LispVal
 parseBin = do try $ string "#b"
               many1 (oneOf "01") >>= (return . Number . bin2dig)
 
 bin2dig :: String -> Integer
-bin2dig x = fst $ readInt 2 isDigit digitToInt x !! 0
+bin2dig x = fst $ readInt 2 isDigit digitToInt (head x)
 
 parseFloat :: Parser LispVal
 parseFloat = do
@@ -170,7 +170,7 @@ parseLongFloat = do
               return . Float $ flt2dig float
 
 flt2dig :: String -> Double
-flt2dig x = fst $ readFloat x !! 0
+flt2dig x = fst $ readFloat (head x)
 
 toDouble :: LispVal -> Double
 toDouble (Float f) = f
@@ -200,15 +200,15 @@ parseCharacter = do try $ string "#\\"
                     return $ Character $ case value of
                                            "space" -> ' '
                                            "newline" -> '\n'
-                                           otherwise -> (value !! 0)
+                                           otherwise -> (head value)
 
 parseAnyList :: Parser LispVal
 parseAnyList = do
                 char '(' >> spaces
-                head <- parseExpr `sepEndBy` spaces
-                do tail <- char '.' >> spaces1 >> parseExpr
-                   return $ DottedList head tail
-                  <|> (spaces >> char ')' >> (return $ List head))
+                valHead <- parseExpr `sepEndBy` spaces
+                do valTail <- char '.' >> spaces1 >> parseExpr
+                   return $ DottedList valHead valTail
+                  <|> (spaces >> char ')' >> (return $ List valHead))
 
 parseQuoted :: Parser LispVal
 parseQuoted = do
@@ -410,7 +410,7 @@ unpackNum (Number val) = return val
 unpackNum (String val) = let parsed = reads val in
                              if null parsed
                                then throwError $ TypeMismatch "number" $ String val
-                               else return . fst $ parsed !! 0
+                               else return . fst $ head parsed
 unpackNum (List [val]) = unpackNum val
 unpackNum notNum = throwError $ TypeMismatch "number" notNum
 
@@ -445,5 +445,5 @@ readExpr input = case parse parseExpr "lisp" input of
 main :: IO ()
 main = do
     args <- getArgs
-    evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
+    evaled <- return $ liftM show $ readExpr (head args) >>= eval
     putStrLn $ extractValue $ trapError evaled
