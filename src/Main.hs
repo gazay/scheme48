@@ -21,6 +21,7 @@ data LispVal = Atom String
              | Bool Bool
              | Character Char
              | Vector (Array Int LispVal)
+             deriving (Show)
 
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -29,8 +30,10 @@ data LispError = NumArgs Integer [LispVal]
                | NotFunction String String
                | UnboundVar String String
                | Default String
+               deriving (Show)
 
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
+                  deriving (Show)
 
 unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
 unpackEquals arg1 arg2 (AnyUnpacker unpacker) = do
